@@ -1,4 +1,4 @@
-module github.com/sshindanai/bookstore-utils-go/resterrors
+module github.com/sshindanai/bookstore-utils-go
 
 go 1.15
 
