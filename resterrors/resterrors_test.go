@@ -1,6 +1,7 @@
 package resterrors
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
@@ -10,12 +11,16 @@ import (
 func TestNewInternalServerError(t *testing.T) {
 	testMsg := "test_error_500"
 
-	err := NewInternalServerError(testMsg)
+	err := NewInternalServerError(testMsg, errors.New("internal error"))
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, err.Code, http.StatusInternalServerError)
-	assert.EqualValues(t, err.Message, testMsg)
-	assert.EqualValues(t, err.Error, "internal_server_error")
+	assert.EqualValues(t, http.StatusInternalServerError, err.Code)
+	assert.EqualValues(t, testMsg, err.Message)
+	assert.EqualValues(t, "internal_server_error", err.Error)
+
+	assert.NotNil(t, err.Causes)
+	assert.EqualValues(t, 1, len(err.Causes))
+	assert.EqualValues(t, "internal error", err.Causes[0])
 }
 
 func TestNewBadrequestError(t *testing.T) {
@@ -24,9 +29,9 @@ func TestNewBadrequestError(t *testing.T) {
 	err := NewBadRequestError(testMsg)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, err.Code, http.StatusBadRequest)
-	assert.EqualValues(t, err.Message, testMsg)
-	assert.EqualValues(t, err.Error, "bad_request")
+	assert.EqualValues(t, http.StatusBadRequest, err.Code)
+	assert.EqualValues(t, testMsg, err.Message)
+	assert.EqualValues(t, "bad_request", err.Error)
 }
 
 func TestNewUnauthorizedError(t *testing.T) {
@@ -35,9 +40,9 @@ func TestNewUnauthorizedError(t *testing.T) {
 	err := NewUnauthorizedError(testMsg)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, err.Code, http.StatusUnauthorized)
-	assert.EqualValues(t, err.Message, testMsg)
-	assert.EqualValues(t, err.Error, "unauthorized")
+	assert.EqualValues(t, http.StatusUnauthorized, err.Code)
+	assert.EqualValues(t, testMsg, err.Message)
+	assert.EqualValues(t, "unauthorized", err.Error)
 }
 
 func TestNewNotFoundError(t *testing.T) {
@@ -46,9 +51,9 @@ func TestNewNotFoundError(t *testing.T) {
 	err := NewNotFoundError(testMsg)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, err.Code, http.StatusNotFound)
-	assert.EqualValues(t, err.Message, testMsg)
-	assert.EqualValues(t, err.Error, "not_found")
+	assert.EqualValues(t, http.StatusNotFound, err.Code)
+	assert.EqualValues(t, testMsg, err.Message)
+	assert.EqualValues(t, "not_found", err.Error)
 }
 
 func TestNewConflictError(t *testing.T) {
@@ -57,9 +62,9 @@ func TestNewConflictError(t *testing.T) {
 	err := NewConflictError(testMsg)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, err.Code, http.StatusConflict)
-	assert.EqualValues(t, err.Message, testMsg)
-	assert.EqualValues(t, err.Error, "conflict")
+	assert.EqualValues(t, http.StatusConflict, err.Code)
+	assert.EqualValues(t, testMsg, err.Message)
+	assert.EqualValues(t, "conflict", err.Error)
 }
 
 func TestNewRestErrorFromBytes(t *testing.T) {
@@ -68,7 +73,7 @@ func TestNewRestErrorFromBytes(t *testing.T) {
 	err := NewRestErrorFromBytes(testMsg)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, err.Code, http.StatusBadRequest)
-	assert.EqualValues(t, err.Message, string(testMsg))
-	assert.EqualValues(t, err.Error, "bad_request")
+	assert.EqualValues(t, http.StatusBadRequest, err.Code)
+	assert.EqualValues(t, string(testMsg), err.Message)
+	assert.EqualValues(t, "bad_request", err.Error)
 }

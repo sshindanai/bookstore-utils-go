@@ -6,9 +6,10 @@ import (
 
 // RestErr is a custom error handling struct for this project
 type RestErr struct {
-	Message string `json:"message"`
-	Code    int    `json:"status_code"`
-	Error   string `json:"error"`
+	Message string        `json:"message"`
+	Code    int           `json:"status_code"`
+	Error   string        `json:"error"`
+	Causes  []interface{} `json:"causes"`
 }
 
 // NewBadRequestError is a custom error handling for BadRequest error
@@ -39,12 +40,17 @@ func NewUnauthorizedError(message string) *RestErr {
 }
 
 // NewInternalServerError is a custom error handling for InternalServerError error
-func NewInternalServerError(message string) *RestErr {
-	return &RestErr{
+func NewInternalServerError(message string, err error) *RestErr {
+	result := &RestErr{
 		Message: message,
 		Code:    http.StatusInternalServerError,
 		Error:   "internal_server_error",
 	}
+	if err != nil {
+		result.Causes = append(result.Causes, err.Error())
+	}
+
+	return result
 }
 
 // NewConflictError is a custom error handling for Conflict error
