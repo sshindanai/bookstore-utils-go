@@ -2,14 +2,28 @@ package logger
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
+const (
+	envLogLevel  = "LOG_LEVEL"
+	envLogOutput = "LOG_OUTPUT"
+)
+
 var (
 	log logger
 )
+
+type loggerInterface interface {
+	Print(...interface{})
+	Printf(string, ...interface{})
+	ErrorPrint(error, ...interface{})
+	ErrorPrintf(string, error, ...interface{})
+}
 
 type logger struct {
 	log *zap.Logger
@@ -36,7 +50,22 @@ func init() {
 	if log.log, err = logConfig.Build(); err != nil {
 		panic(err)
 	}
+}
 
+func Logger() loggerInterface {
+	return log
+}
+
+func getLevel() string {
+	output := strings.TrimSpace(os.Getenv(envLogOutput))
+	if output == "" {
+		return "stdout"
+	}
+	return output
+}
+
+func (l logger) Print(v ...interface{}) {
+	Info(fmt.Sprintf("%v", v))
 }
 
 func (l logger) Printf(format string, v ...interface{}) {
@@ -48,15 +77,26 @@ func (l logger) Printf(format string, v ...interface{}) {
 	Info(fmt.Sprintf(format, v...))
 }
 
-func Logger() logger {
-	return log
+func (l logger) ErrorPrint(err error, v ...interface{}) {
+	Error(fmt.Sprintf("%v", v), err)
 }
 
+func (l logger) ErrorPrintf(format string, err error, v ...interface{}) {
+	if len(v) == 0 {
+		Error(format, err)
+		return
+	}
+
+	Error(fmt.Sprintf("%v", v), err)
+}
+
+// Info is a log function which log an custom info type
 func Info(msg string, tags ...zap.Field) {
 	log.log.Info(msg, tags...)
 	log.log.Sync()
 }
 
+// Error is a log function which log an custom error type
 func Error(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
 	log.log.Error(msg, tags...)
