@@ -56,7 +56,20 @@ func Logger() loggerInterface {
 	return log
 }
 
-func getLevel() string {
+func getLevel() zapcore.Level {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv(envLogLevel))) {
+	case "debug":
+		return zap.DebugLevel
+	case "info":
+		return zap.InfoLevel
+	case "error":
+		return zap.ErrorLevel
+	default:
+		return zap.InfoLevel
+	}
+}
+
+func getOutput() string {
 	output := strings.TrimSpace(os.Getenv(envLogOutput))
 	if output == "" {
 		return "stdout"
