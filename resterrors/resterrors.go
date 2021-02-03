@@ -1,6 +1,7 @@
 package resterrors
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
@@ -95,10 +96,10 @@ func NewConflictError(message string) RestErr {
 }
 
 // NewRestErrorFromBytes is a custom error handling for byte error
-func NewRestErrorFromBytes(b []byte) RestErr {
-	return restErr{
-		message:    string(b),
-		statusCode: http.StatusBadRequest,
-		err:        "bad_request",
+func NewRestErrorFromBytes(b []byte) (RestErr, error) {
+	var apiErr restErr
+	if err := json.Unmarshal(b, &apiErr); err != nil {
+		return nil, err
 	}
+	return apiErr, nil
 }
