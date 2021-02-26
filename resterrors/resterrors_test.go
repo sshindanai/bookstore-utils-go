@@ -1,7 +1,9 @@
 package resterrors
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -14,13 +16,13 @@ func TestNewInternalServerError(t *testing.T) {
 	err := NewInternalServerError(testMsg, errors.New("internal error"))
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, http.StatusInternalServerError, err.Code)
-	assert.EqualValues(t, testMsg, err.Message)
-	assert.EqualValues(t, "internal_server_error", err.Error)
+	assert.EqualValues(t, http.StatusInternalServerError, err.StatusCode())
+	assert.EqualValues(t, testMsg, err.Message())
+	assert.EqualValues(t, "message: test_error_500 - status: 500 - error: internal_server_error - causes: [internal error]", err.Error())
 
-	assert.NotNil(t, err.Causes)
-	assert.EqualValues(t, 1, len(err.Causes))
-	assert.EqualValues(t, "internal error", err.Causes[0])
+	assert.NotNil(t, err.Causes())
+	assert.EqualValues(t, 1, len(err.Causes()))
+	assert.EqualValues(t, "internal error", err.Causes()[0])
 }
 
 func TestNewBadrequestError(t *testing.T) {
@@ -29,9 +31,9 @@ func TestNewBadrequestError(t *testing.T) {
 	err := NewBadRequestError(testMsg)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, http.StatusBadRequest, err.Code)
-	assert.EqualValues(t, testMsg, err.Message)
-	assert.EqualValues(t, "bad_request", err.Error)
+	assert.EqualValues(t, http.StatusBadRequest, err.StatusCode())
+	assert.EqualValues(t, testMsg, err.Message())
+	assert.EqualValues(t, "message: test_error_400 - status: 400 - error: bad_request - causes: []", err.Error())
 }
 
 func TestNewUnauthorizedError(t *testing.T) {
@@ -40,9 +42,9 @@ func TestNewUnauthorizedError(t *testing.T) {
 	err := NewUnauthorizedError(testMsg)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, http.StatusUnauthorized, err.Code)
-	assert.EqualValues(t, testMsg, err.Message)
-	assert.EqualValues(t, "unauthorized", err.Error)
+	assert.EqualValues(t, http.StatusUnauthorized, err.StatusCode())
+	assert.EqualValues(t, testMsg, err.Message())
+	assert.EqualValues(t, "message: test_error_401 - status: 401 - error: unauthorized - causes: []", err.Error())
 }
 
 func TestNewNotFoundError(t *testing.T) {
@@ -51,9 +53,9 @@ func TestNewNotFoundError(t *testing.T) {
 	err := NewNotFoundError(testMsg)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, http.StatusNotFound, err.Code)
-	assert.EqualValues(t, testMsg, err.Message)
-	assert.EqualValues(t, "not_found", err.Error)
+	assert.EqualValues(t, http.StatusNotFound, err.StatusCode())
+	assert.EqualValues(t, testMsg, err.Message())
+	assert.EqualValues(t, "message: test_error_404 - status: 404 - error: not_found - causes: []", err.Error())
 }
 
 func TestNewConflictError(t *testing.T) {
@@ -62,18 +64,51 @@ func TestNewConflictError(t *testing.T) {
 	err := NewConflictError(testMsg)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, http.StatusConflict, err.Code)
-	assert.EqualValues(t, testMsg, err.Message)
-	assert.EqualValues(t, "conflict", err.Error)
+	assert.EqualValues(t, http.StatusConflict, err.StatusCode())
+	assert.EqualValues(t, testMsg, err.Message())
+	assert.EqualValues(t, "message: test_error_409 - status: 409 - error: conflict - causes: []", err.Error())
 }
 
-func TestNewRestErrorFromBytes(t *testing.T) {
-	testMsg := []byte("test_error_500")
+func TestNewRestError(t *testing.T) {
+	message := "Test_TestNewRestError"
+	statusCode := http.StatusBadRequest
+	err := "bad_request_test"
 
-	err := NewRestErrorFromBytes(testMsg)
+	newErr := NewRestError(message, statusCode, err, nil)
+
+	assert.NotNil(t, newErr)
+	assert.EqualValues(t, statusCode, newErr.StatusCode())
+	assert.EqualValues(t, message, newErr.Message())
+	assert.EqualValues(t, fmt.Sprintf("message: %s - status: %d - error: %s - causes: []",
+		message,
+		statusCode,
+		err),
+		newErr.Error())
+}
+
+func TestNewRestFromBytes(t *testing.T) {
+	b := []byte("test_error_500")
+
+	_, err := NewRestErrorFromBytes(b)
 
 	assert.NotNil(t, err)
-	assert.EqualValues(t, http.StatusBadRequest, err.Code)
-	assert.EqualValues(t, string(testMsg), err.Message)
-	assert.EqualValues(t, "bad_request", err.Error)
+}
+
+func TestNewRestFromBytesReturnRestErr(t *testing.T) {
+	testErr := restErr{
+		ErrMessage:    "test_error_400",
+		ErrStatusCode: http.StatusBadRequest,
+		ErrError:      "bad_request",
+	}
+
+	json, _ := json.Marshal(testErr)
+	restErr, _ := NewRestErrorFromBytes(json)
+
+	assert.NotNil(t, restErr)
+	assert.EqualValues(t, testErr.ErrMessage, restErr.Message())
+	assert.EqualValues(t, testErr.ErrStatusCode, restErr.StatusCode())
+	assert.EqualValues(t, fmt.Sprintf("message: %s - status: %d - error: %s - causes: []",
+		testErr.ErrMessage,
+		testErr.ErrStatusCode,
+		testErr.ErrError), restErr.Error())
 }
