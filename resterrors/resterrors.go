@@ -2,9 +2,11 @@ package resterrors
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
+// RestErr is a custom error handling struct for this project
 type RestErr interface {
 	Message() string
 	StatusCode() int
@@ -12,75 +14,75 @@ type RestErr interface {
 	Causes() []interface{}
 }
 
-// RestErr is a custom error handling struct for this project
 type restErr struct {
-	message    string        `json:"message"`
-	statusCode int           `json:"status_statusCode"`
-	err        string        `json:"error"`
-	causes     []interface{} `json:"causes"`
-}
-
-func (e restErr) Message() string {
-	return e.message
-}
-
-func (e restErr) StatusCode() int {
-	return e.statusCode
+	ErrMessage    string        `json:"message"`
+	ErrStatusCode int           `json:"status_code"`
+	ErrError      string        `json:"error"`
+	ErrCauses     []interface{} `json:"causes"`
 }
 
 func (e restErr) Error() string {
-	return e.err
+	return fmt.Sprintf("message: %s - status: %d - error: %s - causes: %v", e.ErrMessage, e.ErrStatusCode, e.ErrError, e.ErrCauses)
+}
+
+func (e restErr) Message() string {
+	return e.ErrMessage
+}
+
+func (e restErr) StatusCode() int {
+	return e.ErrStatusCode
 }
 
 func (e restErr) Causes() []interface{} {
-	return e.causes
+	return e.ErrCauses
 }
 
+// NewRestError is a custom error handling for any error
 func NewRestError(message string, statusCode int, err string, causes []interface{}) RestErr {
 	return restErr{
-		message:    message,
-		statusCode: statusCode,
-		err:        err,
-		causes:     causes,
+		ErrMessage:    message,
+		ErrStatusCode: statusCode,
+		ErrError:      err,
+		ErrCauses:     causes,
 	}
 }
 
 // NewBadRequestError is a custom error handling for BadRequest error
 func NewBadRequestError(message string) RestErr {
 	return restErr{
-		message:    message,
-		statusCode: http.StatusBadRequest,
-		err:        "bad_request",
+		ErrMessage:    message,
+		ErrStatusCode: http.StatusBadRequest,
+		ErrError:      "bad_request",
 	}
 }
 
 // NewNotFoundError is a custom error handling for NotFound error
 func NewNotFoundError(message string) RestErr {
 	return restErr{
-		message:    message,
-		statusCode: http.StatusNotFound,
-		err:        "not_found",
+		ErrMessage:    message,
+		ErrStatusCode: http.StatusNotFound,
+		ErrError:      "not_found",
 	}
 }
 
 // NewUnauthorizedError is a custom error handling for Unauthorized error
 func NewUnauthorizedError(message string) RestErr {
 	return restErr{
-		message:    message,
-		statusCode: http.StatusUnauthorized,
-		err:        "unauthorized",
+		ErrMessage:    message,
+		ErrStatusCode: http.StatusUnauthorized,
+		ErrError:      "unauthorized",
 	}
 }
 
 // NewInternalServerError is a custom error handling for InternalServerError error
 func NewInternalServerError(message string, err error) RestErr {
 	result := restErr{
-		message:    message,
-		statusCode: http.StatusInternalServerError,
-		err:        "internal_server_error",
+		ErrMessage:    message,
+		ErrStatusCode: http.StatusInternalServerError,
+		ErrError:      "internal_server_error",
 	}
 	if err != nil {
-		result.causes = append(result.causes, err.Error())
+		result.ErrCauses = append(result.ErrCauses, err.Error())
 	}
 
 	return result
@@ -89,9 +91,9 @@ func NewInternalServerError(message string, err error) RestErr {
 // NewConflictError is a custom error handling for Conflict error
 func NewConflictError(message string) RestErr {
 	return restErr{
-		message:    message,
-		statusCode: http.StatusConflict,
-		err:        "conflict",
+		ErrMessage:    message,
+		ErrStatusCode: http.StatusConflict,
+		ErrError:      "conflict",
 	}
 }
 
